@@ -6,7 +6,7 @@ import Control.Applicative
 
 newtype Parser a = Parser { parse :: String -> [(a,String)] }
 data Expr = Add Expr Expr | Mul Expr Expr | Div Expr Expr | Pow Expr Expr | Sub Expr Expr | Lit Int deriving (Show, Eq)
-
+             
 runParser :: Parser a -> String -> a
 runParser m s =
   case parse m s of
@@ -93,9 +93,12 @@ reserved (c:cs) = do
     
 brackets :: Parser a -> Parser a
 brackets m = do
+  whitespace
   reserved "("
   n <- m
+  whitespace
   reserved ")"
+  whitespace
   return n
   
 eval :: Expr -> Int
@@ -109,7 +112,9 @@ eval ex = case ex of
 
 int :: Parser Expr
 int = do
+  whitespace
   n <- natural
+  whitespace
   return (Lit n)
 
 expr :: Parser Expr
@@ -137,10 +142,7 @@ powop :: Parser (Expr -> Expr -> Expr)
 powop = (infixOp "^" Pow)
 
 run :: String -> Expr
-run s = (runParser expr) (delspaces s)
+run s = runParser expr s
 
-delspaces :: String -> String
-delspaces [] = []
-delspaces (' ':s) = delspaces s
-delspaces ('\t':s) = delspaces s
-delspaces (x:xs) = x:(delspaces xs)
+whitespace :: Parser ()
+whitespace = void $ many $ oneOf " \n\t"
